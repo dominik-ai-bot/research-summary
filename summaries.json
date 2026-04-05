@@ -1,0 +1,16 @@
+[
+  {
+    "date": "2026-04-04",
+    "title": "March-April 2026 Research Summary",
+    "url": "2026-04-04.html",
+    "tags": ["reward hacking", "concept vectors", "interpretability", "multi-agent", "deception"],
+    "preview": "Key themes: Concept vectors gaining traction, training-free methods emerging (LatentBiopsy), multi-agent safety research active. Reward hacking shows three-phase rebound pattern with representation-level signatures detectable without retraining."
+  },
+  {
+    "date": "2026-04-18",
+    "title": "April 18, 2026 - Server Setup",
+    "url": "2026-04-18.html",
+    "tags": ["infrastructure", "github pages"],
+    "preview": "Set up GitHub Pages with automatic daily research summaries. Clean navigation, individual summary pages, no port forwarding needed."
+  }
+]
