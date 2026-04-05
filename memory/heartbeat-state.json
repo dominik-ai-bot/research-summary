@@ -1,0 +1,83 @@
+{
+  "lastChecks": {
+    "research": 1772726400,
+    "marketing": 1772726400
+  },
+  "researchSummaries": [
+    {
+      "date": "2026-04-04",
+      "papers": [
+        {
+          "title": "When Reward Hacking Rebounds: Understanding and Mitigating It with Representation-Level Signals",
+          "arxiv": "2604.01476",
+          "relevance": "High - Representation engineering, training-time intervention for reward hacking"
+        },
+        {
+          "title": "The Geometry of Harmful Intent: Training-Free Anomaly Detection via Angular Deviation in LLM Residual Streams",
+          "arxiv": "Submitted 2026-03-28",
+          "relevance": "High - Training-free detection via activation geometry"
+        },
+        {
+          "title": "Detecting Multi-Agent Collusion Through Multi-Agent Interpretability",
+          "arxiv": "Submitted 2026-04-01",
+          "relevance": "Medium - Multi-agent safety and collusion detection"
+        },
+        {
+          "title": "Safety, Security, and Cognitive Risks in World Models",
+          "arxiv": "Submitted 2026-04-01",
+          "relevance": "Medium - World models enable new failure modes"
+        },
+        {
+          "title": "Transformers Learn Robust In-Context Regression under Distributional Uncertainty",
+          "arxiv": "2603.18564",
+          "relevance": "Medium - Robust in-context learning under distribution shift"
+        },
+        {
+          "title": "Batched Contextual Reinforcement: A Task-Scaling Law for Efficient Reasoning",
+          "arxiv": "2604.02322",
+          "relevance": "Medium - Implicit constraints enable efficiency gains"
+        }
+      ],
+      "summary": "Key themes: Concept vectors gaining traction for detection/mitigation, training-free methods emerging (LatentBiopsy), multi-agent safety research active. Reward hacking shows three-phase rebound pattern with representation-level signatures detectable without retraining."
+    }
+  ],
+  "marketingIdeas": [
+    {
+      "date": "2026-04-04",
+      "category": "Free Outreach Strategies",
+      "ideas": [
+        "LinkedIn strategy: Share AI insights + case studies targeting SMB owners, post in AI groups",
+        "Twitter/X: Daily AI tips + thread format for 'AI for Business' content",
+        "Reddit: Participate in r/artificial, r/LocalLLM, r/MachineLearning - answer questions, share insights",
+        "AI communities: Discord servers, Slack groups for AI practitioners and business owners",
+        "Free tools audit: Offer quick website AI-opportunity assessment",
+        "Guest posts: Pitch AI-focused blogs and publications",
+        "Cold outreach: Personalized value propositions for agencies already serving SMBs"
+      ]
+    },
+    {
+      "date": "2026-04-04",
+      "category": "Target Businesses",
+      "ideas": [
+        "Digital marketing agencies looking to add AI services",
+        "Web development agencies serving SMBs",
+        "Local business consultants",
+        "CRM consultants",
+        "Marketing automation agencies",
+        "Small business coaches/consultants",
+        "Industry-specific B2B SaaS companies"
+      ]
+    },
+    {
+      "date": "2026-04-04",
+      "category": "Content Ideas",
+      "ideas": [
+        "'How [competitor X] is losing customers to AI-native businesses'",
+        "'5 AI tools that actually replace employees for SMBs (and 3 that don't)'",
+        "Case study: 'How this local restaurant automated 80% of customer inquiries'",
+        "'The ROI of AI: Real numbers from real businesses'",
+        "'AI implementation myths costing SMBs money'"
+      ]
+    }
+  ]
+}

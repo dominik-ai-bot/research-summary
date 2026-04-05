@@ -1,0 +1,3 @@
+Windows-WSL2 Connectivity Test
+File created in WSL2 at $(date)
+This file proves WSL2 is accessible from Windows.
