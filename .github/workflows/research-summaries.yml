@@ -1,0 +1,356 @@
+name: Research Summaries
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'summaries.json'
+
+permissions:
+  contents: write
+
+jobs:
+  generate-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate summary pages
+        run: |
+          # Create pages directory
+          mkdir -p pages
+          
+          # Read summaries
+          SUMMARIES=$(cat summaries.json)
+          
+          # Generate individual pages and update index
+          INDEX_HTML='<!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Research Summaries - Dominik Kaukinen</title>
+              <style>
+                  * {
+                      margin: 0;
+                      padding: 0;
+                      box-sizing: border-box;
+                  }
+
+                  body {
+                      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                      line-height: 1.6;
+                      color: #1a1a2e;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      min-height: 100vh;
+                      padding: 2rem 1rem;
+                  }
+
+                  .container {
+                      max-width: 1200px;
+                      margin: 0 auto;
+                      background: white;
+                      padding: 3rem;
+                      border-radius: 12px;
+                      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                  }
+
+                  .hero {
+                      text-align: center;
+                      padding: 3rem 0;
+                      border-bottom: 2px solid #e0e0e0;
+                      margin-bottom: 2rem;
+                  }
+
+                  .hero h1 {
+                      font-size: 3rem;
+                      color: #667eea;
+                      margin-bottom: 0.5rem;
+                  }
+
+                  .hero p {
+                      color: #555;
+                      font-size: 1.1rem;
+                  }
+
+                  .summaries-grid {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                      gap: 1.5rem;
+                  }
+
+                  .summary-card {
+                      background: #f8f9fa;
+                      padding: 2rem;
+                      border-radius: 8px;
+                      border: 2px solid #e0e0e0;
+                      transition: transform 0.2s, box-shadow 0.2s;
+                      cursor: pointer;
+                  }
+
+                  .summary-card:hover {
+                      transform: translateY(-4px);
+                      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+                  }
+
+                  .summary-card h3 {
+                      font-size: 1.4rem;
+                      color: #333;
+                      margin-bottom: 0.75rem;
+                  }
+
+                  .summary-card .date {
+                      color: #667eea;
+                      font-weight: 600;
+                      font-size: 0.9rem;
+                      margin-bottom: 1rem;
+                  }
+
+                  .summary-card .tags {
+                      display: flex;
+                      flex-wrap: wrap;
+                      gap: 0.5rem;
+                      margin-bottom: 1rem;
+                  }
+
+                  .tag {
+                      background: #667eea;
+                      color: white;
+                      padding: 0.25rem 0.5rem;
+                      border-radius: 4px;
+                      font-size: 0.8rem;
+                  }
+
+                  .summary-card .preview {
+                      color: #555;
+                      font-size: 0.95rem;
+                      line-height: 1.4;
+                  }
+
+                  .footer {
+                      text-align: center;
+                      margin-top: 3rem;
+                      padding-top: 1.5rem;
+                      border-top: 2px solid #e0e0e0;
+                      color: #666;
+                      font-size: 0.85rem;
+                  }
+
+                  @media print {
+                      body {
+                          background: white;
+                          padding: 0;
+                      }
+                      .container {
+                          box-shadow: none;
+                          padding: 1rem;
+                      }
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="hero">
+                      <h1>🔬 Research Summaries</h1>
+                      <p>Automated research tracking for AI alignment, interpretability, and emergent capabilities</p>
+                  </div>
+
+                  <div class="summaries-grid">
+          '
+
+          # Loop through summaries and create pages
+          echo "$SUMMARIES" | jq -r '.[] | @json' | while IFS= read -r date title url tags preview; do
+            # Extract date parts for filename
+            FILEDATE=$(echo "$date" | cut -d' ' ' -f1 | tr '-' '/')
+            
+            # Escape JSON fields for HTML
+            TITLE_ESCAPED=$(echo "$title" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+            PREVIEW_ESCAPED=$(echo "$preview" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+            TAGS_ESCAPED=$(echo "$tags" | jq -r '.[] | @json' | sed 's/"//g' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+            
+            # Create tags HTML
+            TAGS_HTML=""
+            if [ -n "$TAGS_ESCAPED" ]; then
+              TAGS_HTML="<div class=\"tags\">$(echo "$TAGS_ESCAPED" | sed 's/,/ /g' | sed 's/^/<span class=\"tag\">/g' | sed 's/$/<\/span>/g')</div>"
+            fi
+            
+            # Generate page HTML
+            cat > "pages/${FILEDATE}.html" << EOF
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>$TITLE_ESCAPED - Research Summary</title>
+              <style>
+                  * {
+                      margin: 0;
+                      padding: 0;
+                      box-sizing: border-box;
+                  }
+
+                  body {
+                      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                      line-height: 1.6;
+                      color: #1a1a2e;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      min-height: 100vh;
+                      padding: 2rem 1rem;
+                  }
+
+                  .container {
+                      max-width: 900px;
+                      margin: 0 auto;
+                      background: white;
+                      padding: 3rem;
+                      border-radius: 12px;
+                      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                  }
+
+                  .back-nav {
+                      text-align: center;
+                      margin-bottom: 2rem;
+                  }
+
+                  .back-nav a {
+                      display: inline-block;
+                      margin: 0 5px;
+                      padding: 0.5rem 1rem;
+                      background: #667eea;
+                      color: white;
+                      text-decoration: none;
+                      border-radius: 6px;
+                  }
+
+                  .back-nav a:hover {
+                      background: #5568d3;
+                  }
+
+                  .section {
+                      margin-bottom: 2.5rem;
+                  }
+
+                  .section h2 {
+                      font-size: 1.8rem;
+                      color: #667eea;
+                      margin-bottom: 1rem;
+                      padding-bottom: 0.5rem;
+                      border-bottom: 2px solid #e0e0e0;
+                  }
+
+                  .paper {
+                      background: #f8f9fa;
+                      padding: 1.5rem;
+                      border-radius: 8px;
+                      margin-bottom: 1.5rem;
+                      border-left: 4px solid #667eea;
+                  }
+
+                  .paper h3 {
+                      font-size: 1.2rem;
+                      color: #1a1a2e;
+                      margin-bottom: 0.75rem;
+                  }
+
+                  .paper .date {
+                      color: #667eea;
+                      font-weight: 600;
+                      font-size: 0.9rem;
+                      margin-bottom: 1rem;
+                  }
+
+                  .paper .preview {
+                      color: #555;
+                      font-size: 0.95rem;
+                      line-height: 1.5;
+                  }
+
+                  .tags {
+                      display: flex;
+                      flex-wrap: wrap;
+                      gap: 0.5rem;
+                      margin-top: 1rem;
+                  }
+
+                  .tag {
+                      background: #667eea;
+                      color: white;
+                      padding: 0.25rem 0.5rem;
+                      border-radius: 4px;
+                      font-size: 0.8rem;
+                  }
+
+                  .footer {
+                      text-align: center;
+                      margin-top: 3rem;
+                      padding-top: 1.5rem;
+                      border-top: 2px solid #e0e0e0;
+                      color: #666;
+                      font-size: 0.85rem;
+                  }
+
+                  @media print {
+                      body {
+                          background: white;
+                          padding: 0;
+                      }
+                      .container {
+                          box-shadow: none;
+                          padding: 1rem;
+                      }
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="back-nav">
+                      <a href="/">← Back to Summaries</a>
+                  </div>
+
+                  <div class="section">
+                      <h2>$TITLE_ESCAPED</h2>
+                      
+                      <div class="paper">
+                          <div class="date">$date</div>
+                          
+                          <div class="preview">$PREVIEW_ESCAPED</div>
+                          
+                          $TAGS_HTML
+                      </div>
+                  </div>
+
+                  <div class="footer">
+                      <p><strong>Generated by Design 🪄</strong> — OpenClaw AI Agent</p>
+                      <p>Date: $date</p>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+          done
+
+          # Update index.html
+          echo "$SUMMARIES" | jq -r '.[] | reverse | @json' | while IFS= read -r date title url tags preview; do
+            # Escape fields
+            TITLE_ESCAPED=$(echo "$title" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+            PREVIEW_ESCAPED=$(echo "$preview" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+            TAGS_ESCAPED=$(echo "$tags" | jq -r '.[] | @json' | sed 's/"//g' | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+            
+            # Create tags HTML
+            TAGS_HTML=""
+            if [ -n "$TAGS_ESCAPED" ]; then
+              TAGS_HTML="<div class=\"tags\">$(echo "$TAGS_ESCAPED" | sed 's/,/ /g' | sed 's/^/<span class=\"tag\">/g' | sed 's/$/<\/span>/g')</div>"
+            fi
+            
+            # Inject summary card before closing grid
+            sed -i '/<div class="summaries-grid" id="summariesGrid">/a\
+                      <div class="summary-card">\
+                          <h3>'"$TITLE_ESCAPED"'</h3>\
+                          <div class="date">'$date'</div>\
+                          <div class="preview">'"$PREVIEW_ESCAPED"'</div>\
+                          '"$TAGS_HTML"'\
+                          <a href="'"$url"'">Read full summary →</a>\
+                      </div>\
+                      <div class="summaries-grid" id="summariesGrid">' index.html
+          done
