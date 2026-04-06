@@ -1,0 +1,121 @@
+name: Automated Research Summary Updates
+
+on:
+  schedule:
+    # Run every 3 days (bi-weekly) to scan for new papers
+    - cron: '0 9 * * 1,4'  # Every Sunday and Thursday at 9 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scan-arxiv:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        run: |
+          python3 -m pip install arxiv --quiet --user
+          pip install scholarly --quiet
+
+      - name: Scan arXiv for new papers
+        id: scan
+        run: |
+          # Research keywords from Dominik's research interests
+          KEYWORDS="inner+alignment+concept+vectors+deception+mesa+optimization+emergent+capabilities+hopfield+networks+energy+functions+LLMs+lyapunov+stability+control+theory+interpretability+mechanistic+interpretability+activation+steering+reward+hacking+instrumental+convergence+treacherous+turns+objective+misgeneralization"
+
+          # Date range: Last 30 days
+          START_DATE=$(date -u -d "30 days ago" +%Y-%m-%d)
+          END_DATE=$(date -u +%Y-%m-%d)
+
+          # Use arxiv library to search
+          python3 << 'PYTHON_SCRIPT'
+          import arxiv
+          import json
+          from datetime import datetime, timedelta
+
+          # Search for papers
+          search = arxiv.Search(
+              query=KEYWORDS,
+              max_results=50,
+              sort_by="submittedDate"
+          )
+
+          # Get current summaries
+          with open("summaries.json", "r") as f:
+              existing = json.load(f) if f.read() else []
+
+          # Filter new papers (last 30 days)
+          new_papers = []
+          for result in search.results():
+              paper_date = datetime.strptime(result.published.split("T")[0], "%Y-%m-%d").date()
+              start_date = datetime.strptime(START_DATE, "%Y-%m-%d")
+              
+              if paper_date >= start_date:
+                  # Check if already exists
+                  exists = any(p.get("title", "") == result.title for p in existing)
+                  if not exists:
+                      # Create paper entry
+                      paper_entry = {
+                          "title": result.title,
+                          "date": paper_date.strftime("%Y-%m-%d"),
+                          "arxiv": result.entry_id.replace("http://arxiv.org/abs/", "").replace("v1", ""),
+                          "authors": [author.name for author in result.authors],
+                          "summary": result.summary[:200] + "..." if len(result.summary) > 200 else result.summary,
+                          "tags": []
+                      }
+                      
+                      # Try to infer tags from summary
+                      summary_lower = result.summary.lower()
+                      if "deception" in summary_lower or "alignment" in summary_lower or "interpretability" in summary_lower:
+                          paper_entry["tags"].append("interpretability")
+                      if "reward" in summary_lower or "hacking" in summary_lower:
+                          paper_entry["tags"].append("reward hacking")
+                      if "multi-agent" in summary_lower or "agent" in summary_lower:
+                          paper_entry["tags"].append("multi-agent")
+                      if "world model" in summary_lower:
+                          paper_entry["tags"].append("world models")
+                      if "emergent" in summary_lower:
+                          paper_entry["tags"].append("emergent capabilities")
+                      
+                      new_papers.append(paper_entry)
+          
+          # Check if we found new papers
+          if len(new_papers) > 0:
+              # Append to existing summaries
+              updated = existing + new_papers
+              
+              # Sort by date
+              updated.sort(key=lambda x: x["date"], reverse=True)
+              
+              # Write back
+              with open("summaries.json", "w") as f:
+                  json.dump(updated, f, indent=2)
+                  
+              # Add to git
+              import subprocess
+              subprocess.run(["git", "config", "user.name", "github-actions[bot]"])
+              subprocess.run(["git", "config", "user.email", "github-actions[bot]@users.noreply.github.com"])
+              subprocess.run(["git", "add", "summaries.json"])
+              subprocess.run(["git", "commit", "-m", f"Scan arXiv and add {len(new_papers)} new papers [skip ci]"])
+              subprocess.run(["git", "push"])
+              
+              # Trigger notification
+              print(f"✅ Found {len(new_papers)} new papers")
+              print(f"📊 Updated summaries.json")
+              print(f"🚀 Pushed to GitHub")
+              
+              # Set output for notification
+              import sys
+              with open("new-papers.txt", "w") as f:
+                  for paper in new_papers[:10]:  # First 10 papers
+                      f.write(f"{paper['date']}: {paper['title']}\n")
+                      
+              sys.exit(0)
+          else:
+              print("ℹ️  No new papers found in last 30 days")
+              sys.exit(0)
+          PYTHON_SCRIPT
